@@ -1,7 +1,7 @@
 import numpy as np
 import evaluate
 
-def compute_metrics(p, id2tag):
+def compute_metrics(p):
     """ 
     Define metrics.
     """

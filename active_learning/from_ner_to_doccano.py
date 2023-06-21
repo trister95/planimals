@@ -8,4 +8,5 @@ def hf_output_for_doccano(sentences, classifier):
         label = [sentence_part["start"], sentence_part["end"], "ANIMAL"]
         labels.append(label)
     data = {"text":sentence, "labels":labels}
+    json_lst.append(data)
   return json_lst

@@ -28,6 +28,8 @@ def compute_metrics(p,id2tag):
     }
 
 def compute_metrics2(p):
+    seqeval = evaluate.load("seqeval")
+
     predictions, labels = p
     predictions = np.argmax(predictions, axis=2)
 

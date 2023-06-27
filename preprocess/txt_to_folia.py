@@ -4,6 +4,7 @@ the dbnl-texts. The output is folia.xml-files.
 """
 import os
 import ucto
+import tqdm
 from planimals.preprocess.dbnl_xml_to_txt import extract_dbnl_id
 
 def list_txt_files(directory):
@@ -23,10 +24,10 @@ def txt_to_folia(input_dir, output_dir):
     configurationfile_ucto = "tokconfig-nld-historical" 
     tokenizer = ucto.Tokenizer(configurationfile_ucto, foliaoutput = True)
 
-    for f in list_txt_files(input_dir):
+    for f in tqdm.tqdm(list_txt_files(input_dir), desc = "looping through text files"):
         p = input_dir + "/" + f
         out_path = str(output_dir) + "/" + extract_dbnl_id(f) + ".folia.xml"
-        tokenizer.tokenize(p, out_path)
+        if not os.path.exists(out_path):
+            tokenizer.tokenize(p, out_path)
     return
-
 

@@ -4,7 +4,7 @@ the dbnl-texts. The output is folia.xml-files.
 """
 import os
 import ucto
-from preprocess.dbnl_xml_to_txt import extract_dbnl_id
+from planimals.preprocess.dbnl_xml_to_txt import extract_dbnl_id
 
 def list_txt_files(directory):
     """ 

@@ -4,7 +4,7 @@ import folia.main as folia
 import pandas as pd
 import os
 import random 
-from preprocess.dbnl_xml_to_txt import extract_dbnl_id
+from planimals.preprocess.dbnl_xml_to_txt import extract_dbnl_id
 
 def list_folia_files(directory):
   """ 

@@ -44,3 +44,25 @@ def folia_to_df(folia_path):
   df["text_id"] = extract_dbnl_id(folia_path)
   return df
 
+def extract_dbnl_id(f_name):
+    """
+    extract dbnl-id from a filename.
+    """
+    pattern = r"[a-zA-Z_]{4}\d{3}[a-zA-Z_\d]{4}\d{2}"
+    regex = re.compile(pattern)
+    return regex.search(f_name)[0]
+
+def folia_to_df_with_sentence(folia_path):
+  doc = folia.Document(file=folia_path)
+  splitted_s_lst = split_folia(doc)
+  s_lst = split_folia_in_sentences(doc)
+  df = pd.DataFrame({'sentence': s_lst , 'splitted':splitted_s_lst})
+  df["text_id"] = extract_dbnl_id(folia_path)
+  return df
+
+def split_folia_in_sentences(doc):
+  doc_lst = []
+  for s in doc.sentences():
+    doc_lst.append(s.text())
+  return doc_lst
+

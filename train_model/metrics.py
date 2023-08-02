@@ -1,5 +1,6 @@
 import numpy as np
 import evaluate
+seqeval = evaluate.load("seqeval")
 
 def compute_metrics_for_initial_training(p, tag2id, id2tag):
     predictions, labels = p

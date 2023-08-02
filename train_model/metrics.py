@@ -1,15 +1,9 @@
 import numpy as np
 import evaluate
 
-def compute_metrics(p):
-    seqeval = evaluate.load("seqeval")
-
+def compute_metrics_naive_training(p, tag2id, id2tag):
     predictions, labels = p
     predictions = np.argmax(predictions, axis=2)
-
-    unique_tags = ("anything_else", "animal")
-    tag2id = {tag: id for id, tag in enumerate(unique_tags)}
-    id2tag = {id: tag for tag, id in tag2id.items()}
 
     true_predictions = [
         [id2tag[p] for (p, l) in zip(prediction, label) if l != -100]

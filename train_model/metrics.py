@@ -1,7 +1,7 @@
 import numpy as np
 import evaluate
 
-def compute_metrics_naive_training(p, tag2id, id2tag):
+def compute_metrics_for_initial_training(p, tag2id, id2tag):
     predictions, labels = p
     predictions = np.argmax(predictions, axis=2)
 

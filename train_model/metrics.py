@@ -20,5 +20,5 @@ def compute_metrics_for_initial_training(p, tag2id, id2tag):
         "precision": results["overall_precision"],
         "recall": results["overall_recall"],
         "f1": results["overall_f1"],
-        "accuracy": results["overall_accuracy"],
+        "accuracy": results["overall_accuracy"]
     }

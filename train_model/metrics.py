@@ -6,7 +6,7 @@ Thing wants to have a label_lst somewhere.
 Not fully figured out how. 
 """
 
-def compute_metrics_for_initial_training(p):
+def compute_metrics_for_initial_training(p, label_lst):
     predictions, labels = p
     predictions = np.argmax(predictions, axis=2)
 

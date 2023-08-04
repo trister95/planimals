@@ -2,8 +2,8 @@ import numpy as np
 import evaluate
 seqeval = evaluate.load("seqeval")
 """
-Thing wants to have a label_lst somewhere. 
-Not fully figured out how. 
+If this function is used inside a trainer, you'll need to partially fill
+the function with functools.partial.
 """
 
 def compute_metrics_for_initial_training(p, label_lst):

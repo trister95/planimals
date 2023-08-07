@@ -1,9 +1,14 @@
 import ucto
 import json
 
-import json
 
-def jsonl_to_ner_format(filepath, text_col="text", label_col="label"):
+
+import spacy
+from spacy.training import offsets_to_biluo_tags, biluo_to_iob
+nlp = spacy.blank("nl")
+
+
+def jsonl_to_ner_format(filepath, tag2id, text_col="text", label_col="label"):
   lst = []
   with open(filepath, 'r') as file:
     for line in file:
@@ -12,7 +17,8 @@ def jsonl_to_ner_format(filepath, text_col="text", label_col="label"):
       doc = nlp(text)
       biluo_tags = offsets_to_biluo_tags(doc, entities)
       iob_tags = biluo_to_iob(biluo_tags)
-      together = [[word for word in doc],iob_tags]
+      number_tags = [tag2id[iob] for iob in iob_tags]
+      together = [[str(word) for word in doc],number_tags]
       lst.append(together)
   return lst
 

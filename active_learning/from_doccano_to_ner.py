@@ -17,11 +17,13 @@ def jsonl_to_ner_format(filepath, tag2id, text_col="text", label_col="label"):
       doc = nlp(text)
       biluo_tags = offsets_to_biluo_tags(doc, entities)
       iob_tags = biluo_to_iob(biluo_tags)
-      number_tags = [tag2id[iob] for iob in iob_tags]
-      together = [[str(word) for word in doc],number_tags]
-      lst.append(together)
+      try:
+        number_tags = [tag2id[iob] for iob in iob_tags]
+        together = [[str(word) for word in doc],number_tags]
+        lst.append(together)
+      except:
+        print(doc)
   return lst
-
 
 #evrything below is probably not needed anymore
 

@@ -5,6 +5,7 @@ from a directory with dbnl-xml files.
 import os
 import regex as re
 import lxml.etree
+from ..utils import extract_dbnl_id
 
 def list_xml_files(directory):
     """ 
@@ -15,14 +16,6 @@ def list_xml_files(directory):
         if filename.endswith('.xml'):
             xml_files.append(filename)
     return xml_files
-
-def extract_dbnl_id(f_name):
-    """ 
-    extract dbnl-id from a filename.
-    """
-    pattern = r"[a-zA-Z_]{4}\d{3}[a-zA-Z_\d]{4}\d{2}"
-    regex = re.compile(pattern)
-    return regex.search(f_name)[0]
 
 def check_multiple(tree):
     """ 

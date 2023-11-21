@@ -7,10 +7,8 @@ import folia.main as folia
 import pandas as pd
 import random 
 from transformers import AutoTokenizer
-from utils import extract_dbnl_id
-from utils import extract_dbnl_id
-from utils import list_extension_files
-from utils import clean_whitespace
+from utils import extract_dbnl_id, list_extension_files, clean_whitespace, find_language_in_ucto_tokenized_sentence, has_letter
+
 
 """
 These functions extract the actual literary texts
@@ -71,8 +69,6 @@ def add_declaration_to_xml(xml_dir, start_doctype, end_doctype, addition):
             f.write(xml_text)
   return
 
-
-
 def list_xml_files(directory):
     """ 
     Lists all the xml files in a directory.
@@ -83,85 +79,64 @@ def list_xml_files(directory):
             xml_files.append(filename)
     return xml_files
 
-def get_text_dbnl_(xml_file, id, output_dir):
-    """ 
-    Extracts the text from a dbnl xml-file
-    and saves it as .txt-file.
-    """
-    xml = lxml.etree.parse(xml_file) 
-    check_multiple(xml)
+def extract_notes(root):
+    """Extract and store notes from the XML tree."""
+    notes = []
+    for note in root.findall('.//note'):
+        notes.append(clean_whitespace(''.join(note.itertext())))
+        note.clear()  # Remove note from the main tree
+    return notes
 
-    text = ''.join(xml.find("//text").itertext())
-    with open(f'{output_dir}/{id}.txt', 'w') as f:
-        f.write(text)
-    return
-
-#
-def extract_text(elem):
-    """ Extracts and cleans text from an XML element, skipping comments. """
-    if isinstance(elem, ET._Comment):
-        return ''
-    return clean_whitespace(''.join(elem.itertext()))
-
-def extract_notes(elem):
-    """ Extracts and cleans text from a note element. """
-    if elem.tag == 'note':
-        return clean_whitespace(''.join(elem.itertext()))
-    return ''
+def find_text_element(root):
+    """Find and return the <text> element from the XML tree."""
+    text_elements = root.findall('.//text')
+    if len(text_elements) == 0:
+        raise ValueError("No <text> element found in the XML file.")
+    elif len(text_elements) > 1:
+        raise ValueError("More than 1 <text> element found in the XML file.")
+    return text_elements[0]
 
 def combine_text(main_text, notes, include_notes):
-    """ Combines main text and notes based on the include_notes option. """
+    """Combine the main text and notes based on the chosen option."""
     if include_notes == 'end':
-        return '\n'.join(main_text) + '\n\nNotes:\n' + '\n'.join(notes)
+        return main_text + '\n\nNotes:\n' + '\n'.join(notes)
     elif include_notes == 'only':
         return '\n'.join(notes)
-    else:  # Default
-        return '\n'.join(main_text)
+    else:  # Default, only main text
+        return main_text
 
-def get_text_dbnl_fixed(xml_file, id, output_dir, include_notes='default'):
-    """
-    Extracts the text from a dbnl xml-file and saves it as .txt-file.
-    Only includes text within the <text> element.
-    Raises an error if multiple <text> elements are found.
-    Cleans up unnecessary whitespaces.
-    """
+def get_text_dbnl(xml_file, id, output_dir, include_notes='default'):
+    """Extracts text from a dbnl xml-file and saves it as a .txt file."""
     # Parse the XML file
     tree = ET.parse(xml_file)
-    
-    # Find the <text> elements
-    text_elements = tree.findall('.//text')
-    if not text_elements:
-        raise ValueError("No <text> element found in the XML file.")
-    if len(text_elements) > 1:
-        raise ValueError("Multiple <text> elements found in the XML file.")
+    root = tree.getroot()
 
-    # Extracting and cleaning text and notes
-    main_text_parts = [extract_text(elem) for elem in text_elements[0].iter() if include_notes != 'only']
-    note_parts = [extract_notes(elem) for elem in text_elements[0].iter()]
+    # Extract and store notes
+    notes = extract_notes(root)
+
+    # Find the <text> element and extract main text
+    text_element = find_text_element(root)
+    main_text = clean_whitespace(''.join(text_element.itertext()))
 
     # Combine text based on the chosen option
-    combined_text = combine_text(main_text_parts, note_parts, include_notes)
+    combined_text = combine_text(main_text, notes, include_notes)
 
     # Save the combined text to a file
     with open(f'{output_dir}/{id}.txt', 'w', encoding='utf-8') as f:
         f.write(combined_text)
 
-    return
-#
-def dbnl_to_txt(input_dir, output_dir):
-    """ 
-    Puts the pieces of the pipeline together.
-    """
+def dbnl_to_txt(input_dir, output_dir, include_notes="default"):
+    """ Puts the pieces of the pipeline together. """
     xml_files = list_xml_files(input_dir)
     for f in xml_files:
         id = extract_dbnl_id(f)
-        p = input_dir + "/" + f
+        p = os.path.join(input_dir, f)
         try:
-            get_text_dbnl(p, id, output_dir)
-        except:
-            print(f"file {id} could not be parsed")
+            get_text_dbnl(p, id, output_dir, include_notes=include_notes)
+        except Exception as e:
+            error_message = f"file {id} could not be parsed: {e}"
+            print(error_message)
     return
-
 
 """
 This function is for changing txt files to folia files.
@@ -171,41 +146,25 @@ def txt_to_folia(input_dir, output_dir):
     """
     Tokenizes txt files by converting them to folia.xml files.
     """
-    configurationfile_ucto = "tokconfig-nld-historical" 
+    configurationfile_ucto = "tokconfig-nld-historical"
     tokenizer = ucto.Tokenizer(configurationfile_ucto, foliaoutput=True)
 
     for f in tqdm.tqdm(list_extension_files(input_dir, "txt"), desc="Looping through text files"):
-        input_path = os.path.join(input_dir, f)
-        output_filename = f"{extract_dbnl_id(f)}.folia.xml"
-        out_path = os.path.join(output_dir, output_filename)
-        
-        if not os.path.exists(out_path):
-            tokenizer.tokenize(input_path, out_path)
+        try:
+            input_path = os.path.join(input_dir, f)
+            output_filename = f"{extract_dbnl_id(f)}.folia.xml"
+            out_path = os.path.join(output_dir, output_filename)
+            
+            if not os.path.exists(out_path):
+                tokenizer.tokenize(input_path, out_path)
+        except Exception as e:
+            print(f"An error occurred with file {f}: {e}")
 
 """
 These functions are for changing folia files to
 df formats.
 
 """
-
-def split_words(sentence):
-    """
-    Splits a sentence in words.
-    """
-    return [w.text() for w in sentence.words()]
-
-def double_split_folia(doc):
-    """
-    Splits a folia file in sentences and the sentences in words.
-    """
-    return [split_words(s) for s in doc.sentences()]
-
-def single_split_folia(doc):
-    """
-    Splits a folia file in sentences.
-    """
-    return [s for s in doc.sentences()]
-
 def select_random_files(path_to_folder, file_extension, num_files):
     """
     Randomly selects the specified number of files of a specified extension.
@@ -232,22 +191,27 @@ def select_all_files(path_to_folder, file_extension):
   except OSError as e:
         print(f"Error accessing directory: {e}")
         return []
-
+  
 def folia_to_df(folia_path):
-  """
-  Converts a folia file to a df, with columns for the dbnl_id,
-  the intact sentences and the sentences split up in words.
-  """
-  try:
-    doc = folia.Document(file=folia_path)
-    sentence_divided_lst = single_split_folia(doc)
-    word_divided_lst = double_split_folia(doc)
-    df = pd.DataFrame({'sentences': sentence_divided_lst,'split': word_divided_lst})
-    df["text_id"] = extract_dbnl_id(folia_path)
-    return df
-  except Exception as e:
-    print(f"Error processing file {folia_path}: {e}")
-    return pd.DataFrame()
+    """
+    Converts a folia file to a DataFrame, with columns for the dbnl_id,
+    the intact sentences and the sentences split up in words.
+    Only includes sentences that contain letters and are in Dutch.
+    """
+    try:
+        doc = folia.Document(file=folia_path)
+        sentences = []
+        for s in doc.sentences():
+            sentence_text = s.text()
+            if has_letter(sentence_text) and find_language_in_ucto_tokenized_sentence(sentence_text.split()) == 'nl':
+                sentences.append(sentence_text)
+
+        df = pd.DataFrame({'sentences': sentences})
+        df["text_id"] = extract_dbnl_id(folia_path)
+        return df
+    except Exception as e:
+        print(f"Error processing file {folia_path}: {e}")
+        return pd.DataFrame()
 
 def join_meta_csv(df, csv_path, left_on="text_id", right_on="ti_id", sep = ","):
     """

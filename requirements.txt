@@ -1,0 +1,7 @@
+python-ucto
+regex
+lxml
+tqdm
+pandas
+folia
+langdetect

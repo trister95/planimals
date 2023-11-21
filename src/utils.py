@@ -71,3 +71,11 @@ def extract_dbnl_id(f_name):
     regex = re.compile(pattern)
     match = regex.search(f_name)
     return match[0] if match else None
+
+def clean_whitespace(text):
+    """ Clean unnecessary whitespaces from the text. """
+    # Collapse multiple spaces and newlines
+    text = re.sub(r'\s+', ' ', text)
+    # Optional: Convert multiple newlines to a double newline for paragraph separation
+    text = re.sub(r'(\s*\n\s*)+', '\n\n', text)
+    return text.strip()

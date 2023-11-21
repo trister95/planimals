@@ -1,5 +1,5 @@
 import os
-import lxml.etree
+import lxml.etree as ET
 import html.entities
 import ucto
 import tqdm
@@ -10,6 +10,7 @@ from transformers import AutoTokenizer
 from utils import extract_dbnl_id
 from utils import extract_dbnl_id
 from utils import list_extension_files
+from utils import clean_whitespace
 
 """
 These functions extract the actual literary texts
@@ -82,17 +83,7 @@ def list_xml_files(directory):
             xml_files.append(filename)
     return xml_files
 
-def check_multiple(tree):
-    """ 
-    Makes sure there aren't multiple instantiations of //text
-    (code wouldn't work properly in that scenario).    
-    """
-    count = tree.xpath('count(//text)')
-    if count > 1:
-        print("Warning: multiple text elements in one doc. This code doesn't work for this situation!")
-    return
-
-def get_text_dbnl(xml_file, id, output_dir):
+def get_text_dbnl_(xml_file, id, output_dir):
     """ 
     Extracts the text from a dbnl xml-file
     and saves it as .txt-file.
@@ -105,6 +96,58 @@ def get_text_dbnl(xml_file, id, output_dir):
         f.write(text)
     return
 
+#
+def extract_text(elem):
+    """ Extracts and cleans text from an XML element, skipping comments. """
+    if isinstance(elem, ET._Comment):
+        return ''
+    return clean_whitespace(''.join(elem.itertext()))
+
+def extract_notes(elem):
+    """ Extracts and cleans text from a note element. """
+    if elem.tag == 'note':
+        return clean_whitespace(''.join(elem.itertext()))
+    return ''
+
+def combine_text(main_text, notes, include_notes):
+    """ Combines main text and notes based on the include_notes option. """
+    if include_notes == 'end':
+        return '\n'.join(main_text) + '\n\nNotes:\n' + '\n'.join(notes)
+    elif include_notes == 'only':
+        return '\n'.join(notes)
+    else:  # Default
+        return '\n'.join(main_text)
+
+def get_text_dbnl_fixed(xml_file, id, output_dir, include_notes='default'):
+    """
+    Extracts the text from a dbnl xml-file and saves it as .txt-file.
+    Only includes text within the <text> element.
+    Raises an error if multiple <text> elements are found.
+    Cleans up unnecessary whitespaces.
+    """
+    # Parse the XML file
+    tree = ET.parse(xml_file)
+    
+    # Find the <text> elements
+    text_elements = tree.findall('.//text')
+    if not text_elements:
+        raise ValueError("No <text> element found in the XML file.")
+    if len(text_elements) > 1:
+        raise ValueError("Multiple <text> elements found in the XML file.")
+
+    # Extracting and cleaning text and notes
+    main_text_parts = [extract_text(elem) for elem in text_elements[0].iter() if include_notes != 'only']
+    note_parts = [extract_notes(elem) for elem in text_elements[0].iter()]
+
+    # Combine text based on the chosen option
+    combined_text = combine_text(main_text_parts, note_parts, include_notes)
+
+    # Save the combined text to a file
+    with open(f'{output_dir}/{id}.txt', 'w', encoding='utf-8') as f:
+        f.write(combined_text)
+
+    return
+#
 def dbnl_to_txt(input_dir, output_dir):
     """ 
     Puts the pieces of the pipeline together.

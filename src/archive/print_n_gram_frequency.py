@@ -1,10 +1,11 @@
-#should place this somewhere else
+# should place this somewhere else
 
 from collections import Counter
 import ucto
 
-configurationfile_ucto = "tokconfig-nld-historical" #if I remove count_n_gram_frequencies, I can remove this
+configurationfile_ucto = "tokconfig-nld-historical"  # if I remove count_n_gram_frequencies, I can remove this
 tokenizer = ucto.Tokenizer(configurationfile_ucto)
+
 
 def print_n_gram_frequency(lst):
     """
@@ -19,4 +20,4 @@ def print_n_gram_frequency(lst):
 
     counts = Counter(gram_lengths)
     for number, count in counts.items():
-        print(f'The number {number} appears {count} times.')
+        print(f"The number {number} appears {count} times.")

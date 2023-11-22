@@ -7,35 +7,40 @@ import zipfile
 import requests
 import re
 
+
 def create_if_absent(directory):
-  """
-  mia = make if absent
-  Function creates a directory if it doesn't exist already.
-  """
-  import os
-  if not os.path.exists(directory):
-    os.makedirs(directory)
-    print("Directory", directory, "created")
-  else:
-    print("Directory", directory, "already exists")
-  return
+    """
+    Function creates a directory if it doesn't exist already.
+    """
+    import os
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        print("Directory", directory, "created")
+    else:
+        print("Directory", directory, "already exists")
+    return
+
 
 def get_lst_from_csv(value):
-  """
-  Would be smart to do some more checking,
-  since I expected that the first value declaratiod
-  wouldn't be needed (but it turns out it is).
-  """
-  value = ast.literal_eval(value)
-  value_str = value.decode('utf-8')
-  return ast.literal_eval(value_str)
+    """
+    Would be smart to do some more checking,
+    since I expected that the first value declaratiod
+    wouldn't be needed (but it turns out it is).
+    """
+    value = ast.literal_eval(value)
+    value_str = value.decode("utf-8")
+    return ast.literal_eval(value_str)
+
 
 def has_letter(s):
     # Helper function to check if a string has a letter
     return any(char.isalpha() for char in s)
 
+
 def find_language_in_ucto_tokenized_sentence(sentence_lst):
     return detect((" ".join(sentence_lst)))
+
 
 def list_extension_files(directory, extension):
     """
@@ -43,25 +48,30 @@ def list_extension_files(directory, extension):
     """
     try:
         # Using glob for pattern matching
-        return [os.path.basename(file) for file in glob.glob(f"{directory}/*.{extension}")]
+        return [
+            os.path.basename(file) for file in glob.glob(f"{directory}/*.{extension}")
+        ]
     except OSError as e:
         print(f"Error: {e}")
-        return [] 
-    
-def download_and_unzip(url, output_dir = "."):
+        return []
+
+
+def download_and_unzip(url, output_dir="."):
     # Download the zipfile
     filename, _ = urllib.request.urlretrieve(url)
 
     # Unzip the zipfile
-    with zipfile.ZipFile(filename, 'r') as zip_ref:
+    with zipfile.ZipFile(filename, "r") as zip_ref:
         zip_ref.extractall(output_dir)
-    return 
+    return
+
 
 def download(url, output):
     response = requests.get(url)
     with open(output, "wb") as file:
         file.write(response.content)
     return
+
 
 def extract_dbnl_id(f_name):
     """
@@ -72,10 +82,11 @@ def extract_dbnl_id(f_name):
     match = regex.search(f_name)
     return match[0] if match else None
 
+
 def clean_whitespace(text):
-    """ Clean unnecessary whitespaces from the text. """
+    """Clean unnecessary whitespaces from the text."""
     # Collapse multiple spaces and newlines
-    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r"\s+", " ", text)
     # Optional: Convert multiple newlines to a double newline for paragraph separation
-    text = re.sub(r'(\s*\n\s*)+', '\n\n', text)
+    text = re.sub(r"(\s*\n\s*)+", "\n\n", text)
     return text.strip()

@@ -90,3 +90,16 @@ def clean_whitespace(text):
     # Optional: Convert multiple newlines to a double newline for paragraph separation
     text = re.sub(r"(\s*\n\s*)+", "\n\n", text)
     return text.strip()
+
+def count_files_in_folder(folder_path):
+    """
+    Couns file in a directory. 
+    Input: path to directory (string)
+    """
+    file_count = 0
+
+    # Iterate over all the items in the folder
+    for _, _, files in os.walk(folder_path):
+        file_count += len(files)
+
+    return file_count
